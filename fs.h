@@ -1,6 +1,9 @@
-#include "types.h"
 #ifndef _FS_H_
 #define _FS_H_
+
+#define T_DIR  1   // Directory
+#define T_FILE 2   // File
+#define T_DEV  3   // Special device
 
 // On-disk file system format.
 // Both the kernel and user programs use this header file.
