@@ -12,8 +12,7 @@
 using namespace std;
 
 int main() {
-    // superblock * sb = (superblock*) fs;
-    // void * fs = mmap(nullptr, ---);
+
     
     return 0;
 }
