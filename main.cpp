@@ -11,6 +11,12 @@
 
 using namespace std;
 
+bool superBlockCheck() {
+    bool retVal = true;
+    superblock * sb;
+    return retVal;
+}
+
 int main() {
 
     
