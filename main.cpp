@@ -11,6 +11,9 @@
 #include <sys/stat.h>
 using namespace std;
 
+#define T_DIR  1   // Directory
+#define T_FILE 2   // File
+#define T_DEV  3   // Special device
 
 int main(int argc, char * argv[]) {
     int fd = -1;
@@ -49,11 +52,22 @@ int main(int argc, char * argv[]) {
         cout << "Size: " << sb->size << endl;
         cout << "Number of Blocks: " << sb->nblocks << endl;
         cout << "Number of inodes: " << sb->ninodes << endl;
+        cout << "-----------------------" << endl;
+        cout << endl;
     }
 // ---------------------------------
 // Checking inode block
 // ---------------------------------
-    
+    cout << "Inode Type" << endl;
+    dinode* node = (dinode*)((char*) fs + 1024);
+    for(int i = 0; i < sb->ninodes; i++) {
+        if (i % 8 == 0)
+            cout << '|';
+        cout << node++->type;
+        if ((i + 1) % 40 == 0 && i != 0)
+            cout << endl;
+    }
+
 
 
     cout << endl;
