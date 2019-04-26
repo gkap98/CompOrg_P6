@@ -63,14 +63,22 @@ int main(int argc, char * argv[]) {
 // ---------------------------------
     cout << "INODE TYPE" << endl;
     cout << "-----------------------" << endl;
+    int nodes[sb->ninodes];
     dinode* node = (dinode*)((char*) fs + 1024);        // Pointer at the beinging of the Inode Block
     for (int i = 0; i < sb->ninodes; i++) {
+        nodes[i] = node->type;
         if (i % 8 == 0)
             cout << '|';
         cout << node++->type;                           // Printing out type of Inode for every Inode
         if ((i + 1) % 40 == 0 && i != 0)
             cout << endl;
     }
+    cout << endl;
+    cout << "Inode Array:" << endl;
+        for (int i = 0; i < sb->ninodes; i++) {
+            cout << nodes[i] << ' ';
+        }
+        cout << endl;
     cout << "-----------------------" << endl;
     cout << endl;
 // ---------------------------------
