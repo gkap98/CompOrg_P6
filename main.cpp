@@ -63,6 +63,7 @@ int main(int argc, char * argv[]) {
 // ---------------------------------
     cout << "INODE TYPE" << endl;
     cout << "-----------------------" << endl;
+    dinode * inodeArray[sb->ninodes];
     int nodes[sb->ninodes];
     dinode* node = (dinode*)((char*) fs + 1024);        // Pointer at the beinging of the Inode Block
     for (int i = 0; i < sb->ninodes; i++) {
@@ -75,10 +76,11 @@ int main(int argc, char * argv[]) {
     }
     cout << endl;
     cout << "Inode Array:" << endl;
-        for (int i = 0; i < sb->ninodes; i++) {
-            cout << nodes[i] << ' ';
-        }
-        cout << endl;
+    for (int i = 0; i < sb->ninodes; i++) {
+        inodeArray[i] = node;                           // Pointer at current node = inodeArray at index i
+        node += 64;                                     // Node = node + 64 bytes for the size of each inode.
+    }
+    cout << endl;
     cout << "-----------------------" << endl;
     cout << endl;
 // ---------------------------------
