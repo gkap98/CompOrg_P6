@@ -8,5 +8,5 @@
     If pointer is 'inode*' then moving to the next inode is pointer++.
 
 # Space between Inode block and BitMap block
-
+    #define BBLOCK(b, ninodes) (b/BPB + (ninodes)/IPB + 3)
 
