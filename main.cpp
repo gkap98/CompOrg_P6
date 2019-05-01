@@ -97,9 +97,9 @@ int main(int argc, char * argv[]) {
 // ---------------------------------
     cout << "BIT MAP" << endl;
     cout << "-----------------------" << endl;
-    char * mapPtr = (char*)fs + (((sb->ninodes/IPB)+1)*512);
+    char * mapPtr = (char*)fs + (((sb->ninodes / IPB) + 1) * 512);
     mapPtr += 1024;                                         // Got help with this from a friend
-     
+    
     vector<int> mapVec = {0};
 
     cout << "BitMap Starting Position: " << mapPtr - (char*)fs << endl;
