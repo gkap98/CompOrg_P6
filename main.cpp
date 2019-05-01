@@ -37,7 +37,7 @@ int main(int argc, char * argv[]) {
 // Checking SIZE of Superblock
 // ---------------------------------
     // Creating a Superblock pointer to check Supberblock size
-    superblock * sb = (superblock*) ((char*)fs + 512);
+    superblock * sb = (superblock*) ((char*)fs + BSIZE);
     struct stat fileSystem;
     stat(argv[1], &fileSystem); 
     // If Superblock is not the correct size
@@ -91,13 +91,12 @@ int main(int argc, char * argv[]) {
     cout << "-----------------------" << endl;
     cout << endl;
 
-
 // ---------------------------------
 // Checking BitMap block
 // ---------------------------------
     cout << "BIT MAP" << endl;
     cout << "-----------------------" << endl;
-    char * mapPtr = (char*)fs + (((sb->ninodes / IPB) + 1) * 512);
+    char * mapPtr = (char*)fs + (((sb->ninodes / IPB) + 1) * BSIZE);
     mapPtr += 1024;                                         // Got help with this from a friend
     
     vector<int> mapVec = {0};
