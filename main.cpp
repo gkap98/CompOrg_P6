@@ -63,42 +63,59 @@ int main(int argc, char * argv[]) {
 // ---------------------------------
     cout << "INODE TYPE" << endl;
     cout << "-----------------------" << endl;
-    dinode * inodeArray[sb->ninodes];
-    int nodes[sb->ninodes];
+    dinode * inodeArray[sb->ninodes];                   // Array of Inode
     dinode* node = (dinode*)((char*) fs + 1024);        // Pointer at the beinging of the Inode Block
+    cout << "Inode Array Number of Links:" << endl;
+    dinode* tempNode = node;                            // Temp Pointer to walk through Inode Array to save start of Array.
     for (int i = 0; i < sb->ninodes; i++) {
-        nodes[i] = node->type;
-        if (i % 8 == 0)
-            cout << '|';
-        cout << node++->type;                           // Printing out type of Inode for every Inode
-        if ((i + 1) % 40 == 0 && i != 0)
-            cout << endl;
+        inodeArray[i] = tempNode;                           // Pointer at current node = inodeArray at index i
+        cout << tempNode++ -> nlink << ' ';
     }
-    cout << endl;
-    cout << "Inode Array:" << endl;
+    cout << endl << endl;
+    //-----
+    tempNode = node;
+    cout << "Inode Array Type:" << endl;
     for (int i = 0; i < sb->ninodes; i++) {
-        inodeArray[i] = node;                           // Pointer at current node = inodeArray at index i
-        node += 64;                                     // Node = node + 64 bytes for the size of each inode.
+        inodeArray[i] = tempNode;
+        cout << tempNode++ -> type << ' ';
+    }
+    //-----
+    cout << endl << endl;
+    tempNode = node;
+    cout << "Size of each File from Inode Array:" << endl;
+    for (int i = 0; i < sb->ninodes; i++) {
+        inodeArray[i] = tempNode;
+        cout << tempNode++ -> size << ' ';
     }
     cout << endl;
     cout << "-----------------------" << endl;
     cout << endl;
+
+
 // ---------------------------------
 // Checking BitMap block
 // ---------------------------------
     cout << "BIT MAP" << endl;
     cout << "-----------------------" << endl;
-    char * mapPtr;
-    if (sb->ninodes % IPB == 0)
-        mapPtr = (char*) fs + (((sb->ninodes)/IPB) * 512);          // Setting pointer at the begining of BitMap if number of Inodes fits number of blocks perfectly
-    else 
-        mapPtr = (char*) fs + ((((sb->ninodes)/IPB) + 1) * 512);    // Setting pointer at the begining of BitMap if number of Inodes does not fit number of blocks perfectly
-
+    char * mapPtr = (char*)fs + ((((*sb).ninodes/IPB)+1)*512);
+    mapPtr += 1024;
+     
     vector<int> mapVec = {0};
-    char * itr = mapPtr;
-    for (int i = 0; i < 2; i++) {
-        mapVec[i] = *itr;
-        itr++;
+
+    cout << "BitMap Starting Position: " << mapPtr - (char*)fs << endl;
+    cout << "  ";
+    for (uint i = 0; i < ((*sb).nblocks / 8); i++) {
+       for(int j = 0; j < 8; j++){
+            mapVec.push_back(!!(((*mapPtr) << (7 - j)) & 0x80));                // Pushing the correct bits into a vector called mapVec that is the BitMap
+            cout << mapVec[i * 8 + j] << " ";
+            if((j + 1) % 8 == 0)
+                cout << "| ";
+            if((i * 8 + j + 1) % 40 == 0){
+                cout << endl;
+                cout << "| ";
+            }
+       }
+        mapPtr++;
     }
 
     cout << endl;

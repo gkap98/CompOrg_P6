@@ -10,3 +10,6 @@
 # Space between Inode block and BitMap block
     #define BBLOCK(b, ninodes) (b/BPB + (ninodes)/IPB + 3)
 
+# Compiler Command
+    g++ -Wall -g -std=c++11
+
