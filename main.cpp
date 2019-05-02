@@ -17,6 +17,38 @@ using namespace std;
 #define T_FILE 2   // File
 #define T_DEV  3   // Special device
 
+bool unalocatedBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
+    bool retValue = false;
+    for (uint i = 0; i < sb->ninodes; i++) {
+        for (int j = 0; j < NDIRECT + 1; j++) {
+            if (j == NDIRECT) {
+                uint indirectBlock = (inodeArray[i]->addrs[j]) * BSIZE;
+                if (indirectBlock > (sb->nblocks * 8)) {        // Make sure that the indirectBlock is greater than the number of blocks * 8
+                    break;
+                }
+                uint * ptr = (uint *)fs + indirectBlock;
+                for (int k = 0; k < 128; k++) {                 // k is going through the total number of possible indirect address blocks.
+                    if ((*ptr != 0) && (mapVec[*ptr] == 0)) {
+                        cout << "The bit map says block " << *ptr << " is free but you found it referenced in the BitMap." << endl;
+                        retValue = true;
+                        ptr++;
+                    }
+                }
+            }
+            if ((inodeArray[i]->addrs[j] != 0) && (mapVec[inodeArray[i]->addrs[j]] == 0) ) {
+                cout << "The bit map says block " << inodeArray[i]->addrs[j] << " is free but you found it referenced in the BitMap." << endl;
+                retValue = true;
+            }
+        }
+    }
+    cout << endl;
+    return retValue;
+}
+
+bool multipleAllocatedBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
+    bool retVal = false;
+}
+
 int main(int argc, char * argv[]) {
     int fd = -1;
     // Making sure file system was givin in command line correctly
@@ -100,7 +132,6 @@ int main(int argc, char * argv[]) {
     mapPtr += 1024;                                         // Got help with this from a friend
     
     vector<int> mapVec = {0};
-
     cout << "BitMap Starting Position: " << mapPtr - (char*)fs << endl;
     cout << "  ";
     for (uint i = 0; i < ((*sb).nblocks / 8); i++) {
@@ -116,7 +147,15 @@ int main(int argc, char * argv[]) {
        }
         mapPtr++;
     }
-
+    
+// ---------------------------------
+// Catching File System Errors
+// ---------------------------------
+    cout << endl << endl;
+    cout << "Current File System Errors Found: " << endl;
+    cout << "-----------------------------------------" << endl;
+    unalocatedBlock(fs, sb, inodeArray, mapVec);
+    multipleAllocatedBlock(fs, sb, inodeArray, mapVec);
     cout << endl;
     return 0;
 }
