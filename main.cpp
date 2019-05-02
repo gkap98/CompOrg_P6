@@ -29,15 +29,15 @@ bool unalocatedBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<in
                 uint * ptr = (uint *)fs + indirectBlock;
                 for (int k = 0; k < 128; k++) {                 // k is going through the total number of possible indirect address blocks.
                     if ((*ptr != 0) && (mapVec[*ptr] == 0)) {
-                        cout << "The bit map says block " << *ptr << " is free but you found it referenced in the BitMap." << endl;
-                        retValue = true;
-                        ptr++;
+                        cout << "The bit map says block " << *ptr << " is free but you found it referenced in a valid Inode." << endl;
+                        return true;
                     }
+                    ptr++;
                 }
             }
-            if ((inodeArray[i]->addrs[j] != 0) && (mapVec[inodeArray[i]->addrs[j]] == 0) ) {
-                cout << "The bit map says block " << inodeArray[i]->addrs[j] << " is free but you found it referenced in the BitMap." << endl;
-                retValue = true;
+            else if ((inodeArray[i]->addrs[j] != 0) && (mapVec[inodeArray[i]->addrs[j]] == 0) ) {
+                cout << "The bit map says block " << inodeArray[i]->addrs[j] << " is free but you found it referenced in a valid Inode." << endl;
+                return true;
             }
         }
     }
@@ -46,7 +46,38 @@ bool unalocatedBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<in
 }
 
 bool multipleAllocatedBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
-    bool retVal = false;
+    bool retValue = false;
+    int blockLog[sb->nblocks];
+    for (int i = 0; i < sb->nblocks; i++) {
+        blockLog[i] = 0;
+    }
+    for (uint i = 0; i < sb->ninodes; i++) {
+        for (int j = 0; j < NDIRECT + 1; j++) {
+            if (j == NDIRECT) {
+                uint indirectBlock = (inodeArray[i]->addrs[j]) * BSIZE;
+                if (indirectBlock > (sb->nblocks * 8)) {        // Make sure that the indirectBlock is greater than the number of blocks * 8
+                    break;
+                }
+                uint * ptr = (uint *)fs + indirectBlock;
+                for (int k = 0; k < 128; k++) {                 // k is going through the total number of possible indirect address blocks.
+                        blockLog[*ptr]++;
+                        ptr++;
+                }
+            }
+            else {
+                blockLog[inodeArray[i]->addrs[j]]++;
+            }
+        }
+    }
+    for (uint i = 1; i < sb->nblocks; i++) {
+        //cout << i << ' ' << blockLog[i] << endl;
+        if (blockLog[i] > 1) {
+            cout << "Block is referenced by more than one Inode" << endl;
+            retValue = true;
+        }
+    }
+    cout << endl;
+    return retValue;
 }
 
 int main(int argc, char * argv[]) {
@@ -91,59 +122,26 @@ int main(int argc, char * argv[]) {
         cout << endl;
     }
 // ---------------------------------
-// Checking inode block
+// Inode block
 // ---------------------------------
-    cout << "INODE TYPE" << endl;
-    cout << "-----------------------" << endl;
+
     dinode * inodeArray[sb->ninodes];                   // Array of Inode
+    for (int i = 0; i < sb->ninodes; i++) {
+        inodeArray[i] = NULL;
+    }
     dinode* node = (dinode*)((char*) fs + 1024);        // Pointer at the beinging of the Inode Block
-    cout << "Inode Array Number of Links:" << endl;
-    dinode* tempNode = node;                            // Temp Pointer to walk through Inode Array to save start of Array.
-    for (int i = 0; i < sb->ninodes; i++) {
-        inodeArray[i] = tempNode;                           // Pointer at current node = inodeArray at index i
-        cout << tempNode++ -> nlink << ' ';
+    for (uint i = 0; i < sb->ninodes; i++) {
+        inodeArray[i] = node++;
     }
-    cout << endl << endl;
-    //-----
-    tempNode = node;
-    cout << "Inode Array Type:" << endl;
-    for (int i = 0; i < sb->ninodes; i++) {
-        inodeArray[i] = tempNode;
-        cout << tempNode++ -> type << ' ';
-    }
-    //-----
-    cout << endl << endl;
-    tempNode = node;
-    cout << "Size of each File from Inode Array:" << endl;
-    for (int i = 0; i < sb->ninodes; i++) {
-        inodeArray[i] = tempNode;
-        cout << tempNode++ -> size << ' ';
-    }
-    cout << endl;
-    cout << "-----------------------" << endl;
-    cout << endl;
 
 // ---------------------------------
-// Checking BitMap block
+// BitMap block
 // ---------------------------------
-    cout << "BIT MAP" << endl;
-    cout << "-----------------------" << endl;
-    char * mapPtr = (char*)fs + (((sb->ninodes / IPB) + 1) * BSIZE);
-    mapPtr += 1024;                                         // Got help with this from a friend
-    
+    char * mapPtr = (char*)fs + (((sb->ninodes / IPB) + 3) * BSIZE);
     vector<int> mapVec = {0};
-    cout << "BitMap Starting Position: " << mapPtr - (char*)fs << endl;
-    cout << "  ";
     for (uint i = 0; i < ((*sb).nblocks / 8); i++) {
        for(int j = 0; j < 8; j++){
-            mapVec.push_back(!!(((*mapPtr) << (7 - j)) & 0x80));                // Pushing the correct bits into a vector called mapVec that is the BitMap
-            cout << mapVec[i * 8 + j] << " ";
-            if((j + 1) % 8 == 0)
-                cout << "| ";
-            if((i * 8 + j + 1) % 40 == 0){
-                cout << endl;
-                cout << "| ";
-            }
+            mapVec.push_back(!!(((*mapPtr) << (7 - j)) & 0x80));    // Pushing the correct bits into a vector called mapVec that is the BitMap
        }
         mapPtr++;
     }
