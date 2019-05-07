@@ -13,3 +13,8 @@
 # Compiler Command
     g++ -Wall -g -std=c++11
 
+# Address Arithmetic
+    At the moment you do the malloc instead of keeping it a void* -> cast it as a single byte.
+
+# Superblock display
+    Display all the information from the Superblock (this will help you!)
