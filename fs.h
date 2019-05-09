@@ -8,18 +8,23 @@
 // On-disk file system format.
 // Both the kernel and user programs use this header file.
 
-// Block 0 is unused.
-// Block 1 is super block.
-// Inodes start at block 2.
+// Disk layout:
+// [ boot block | superblock | log | inode blocks | free bit map | data blocks]
 
 #define ROOTINO 1  // root i-number
 #define BSIZE 512  // block size
 
+// mkfs computes the super block and builds an initial file system. The
+// Superblock describes the disk layout:
 // File system super block
 struct superblock {
   uint size;         // Size of file system image (blocks)
   uint nblocks;      // Number of data blocks
   uint ninodes;      // Number of inodes.
+  uint nlog;         // Number of log blocks
+  uint logstart;     // Block number of first log block
+  uint inodestart;   // Block number of first inode block
+  uint bmapstart;    // Block number of first free map block
 };
 
 #define NDIRECT 12

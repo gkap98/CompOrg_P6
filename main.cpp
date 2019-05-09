@@ -163,36 +163,36 @@ bool inodeOneNotRoot(void * fs, superblock * sb, dinode ** inodeArray, vector<in
 // NOT DONE
 bool missingBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
     
-    vector<int> referenceToBlock = {0};
-    for (uint i = 0;  i< sb->ninodes; i++) 
-    {        // Going through the number of inodes
-        for (uint j = 0; j < NDIRECT + 1; j++) 
-        {
-            if (j == NDIRECT) 
-            {
-                uint indirect = inodeArray[i]->addrs[j];
+    // vector<int> referenceToBlock = {0};
+    // for (uint i = 0;  i< sb->ninodes; i++) 
+    // {        // Going through the number of inodes
+    //     for (uint j = 0; j < NDIRECT + 1; j++) 
+    //     {
+    //         if (j == NDIRECT) 
+    //         {
+    //             uint indirect = inodeArray[i]->addrs[j];
 
-                uint * ptr = (uint *)fs + (indirect * BSIZE) / 4;
-                for (int k = 0; k < 128; k++) {
-                    referenceToBlock.push_back(*ptr);
-                    ptr++;
-                }
-            }
-            else
-            {
-                referenceToBlock.push_back(inodeArray[i]->addrs[j]);
-            }
-        }
-    }
-    bool found = false;
-    for (uint k = 0; k < mapVec.size(); k++) 
-    {
-        for (uint p = 0; p < referenceToBlock.size() p++) 
-        {
-            if (referenceToBlock[k] == p)
-        }
-    }
-    return false;     
+    //             uint * ptr = (uint *)fs + (indirect * BSIZE) / 4;
+    //             for (int k = 0; k < 128; k++) {
+    //                 referenceToBlock.push_back(*ptr);
+    //                 ptr++;
+    //             }
+    //         }
+    //         else
+    //         {
+    //             referenceToBlock.push_back(inodeArray[i]->addrs[j]);
+    //         }
+    //     }
+    // }
+    // bool found = false;
+    // for (uint k = 0; k < mapVec.size(); k++) 
+    // {
+    //     for (uint p = 0; p < referenceToBlock.size() p++) 
+    //     {
+    //         if (referenceToBlock[k] == p)
+    //     }
+    // }
+     return false;     
 }
 
 int main(int argc, char * argv[]) {
@@ -212,7 +212,7 @@ int main(int argc, char * argv[]) {
     }
 
 // ---------------------------------
-// Checking SIZE of Superblock
+// Checking of the Superblock
 // ---------------------------------
 
     // Creating a Superblock pointer to check Supberblock size
@@ -224,6 +224,8 @@ int main(int argc, char * argv[]) {
         cout << "File System Error" << endl;
         cout << "Incorrect size of Superblock" << endl;
         cout << "Superblock size: " << sb->size << endl;
+        cout << "-----------------------" << endl;
+        cout << "SUPERBLOCK -> NOT OK" << endl;
         munmap(fs, BSIZE*1024);
         exit(1);
     }
@@ -233,7 +235,12 @@ int main(int argc, char * argv[]) {
         cout << "-----------------------" << endl;
         cout << "   Size: " << sb->size << endl;
         cout << "   Number of Blocks: " << sb->nblocks << endl;
-        cout << "   Number of inodes: " << sb->ninodes << endl;
+        cout << "   Number of Inodes: " << sb->ninodes << endl;
+        cout << "   Number of Logs:   " << sb->nlog << endl;
+        cout << "------------"          << endl;
+        cout << "   Logs begins at:   " << sb->logstart << endl;
+        cout << "   Inodes begins at: " << sb->inodestart << endl;
+        cout << "   BitMap begins at: " << sb->bmapstart << endl;
         cout << "-----------------------" << endl;
         cout << "SUPERBLOCK -> OK" << endl;
         cout << endl;
