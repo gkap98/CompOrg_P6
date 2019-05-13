@@ -17,6 +17,9 @@ using namespace std;
 #define T_FILE 2   // File
 #define T_DEV  3   // Special device
 
+// --------------------------------------
+// File System Check Functions
+// --------------------------------------
 bool unalocatedBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
     for (uint i = 0; i < sb->ninodes; i++) {
         for (int j = 0; j < NDIRECT + 1; j++) {
@@ -149,51 +152,62 @@ bool inodeOneNotRoot(void * fs, superblock * sb, dinode ** inodeArray, vector<in
     for (uint i = 2; i < sb->ninodes; i++) {
         if (inodeArray[i]->type == 1) {
             dirent * dir = (dirent*)((char*)fs + (BSIZE *(*inodeArray[i]->addrs)));
-            for (uint i = 2; i < sb->ninodes; i++) {
-                if (dir->inum == 1) 
-                {
-                    cout << "ERROR: Inode " << i << " (other than root) reffers to Inode 1 as ." << endl;
-                    return true;
-                }
+            if (dir->inum == 1) 
+            {
+                cout << "ERROR: Inode " << i << " reffers to Inode 1 as ." << endl;
+                return true;
             }
         }
     }
     return false;
 }
-// NOT DONE
+
 bool missingBlock(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
     
-    // vector<int> referenceToBlock = {0};
-    // for (uint i = 0;  i< sb->ninodes; i++) 
-    // {        // Going through the number of inodes
-    //     for (uint j = 0; j < NDIRECT + 1; j++) 
-    //     {
-    //         if (j == NDIRECT) 
-    //         {
-    //             uint indirect = inodeArray[i]->addrs[j];
-
-    //             uint * ptr = (uint *)fs + (indirect * BSIZE) / 4;
-    //             for (int k = 0; k < 128; k++) {
-    //                 referenceToBlock.push_back(*ptr);
-    //                 ptr++;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             referenceToBlock.push_back(inodeArray[i]->addrs[j]);
-    //         }
-    //     }
-    // }
-    // bool found = false;
-    // for (uint k = 0; k < mapVec.size(); k++) 
-    // {
-    //     for (uint p = 0; p < referenceToBlock.size() p++) 
-    //     {
-    //         if (referenceToBlock[k] == p)
-    //     }
-    // }
-     return false;     
+    vector<int> referenceToBlock;
+    for (uint i = 0;  i< sb->ninodes; i++) {        // Going through the number of inodes
+        for (uint j = 0; j < NDIRECT + 1; j++) {
+            if (j == NDIRECT) {                                             // Making sure that the NDIRECTS are equal to the index of j
+                uint indirect = inodeArray[i]->addrs[j];                    // Creating a indirect variable that is equal to the address of the inode its pointing to 
+                referenceToBlock.push_back(inodeArray[i]->addrs[j]);
+                uint * ptr = (uint *)fs + (indirect * BSIZE) / 4;           // Pointer at the start of the indeirect pointers
+                for (int k = 0; k < 128; k++) {
+                    referenceToBlock.push_back(*ptr);                       // Pushing derefferenced pointer to the vector if the block is refferenced
+                    ptr++;                                                  // Incrementing pointer 
+                }
+            }
+            else {
+                referenceToBlock.push_back(inodeArray[i]->addrs[j]);        // else push on the rest of the inode addresses.
+            }
+        }
+    }
+    bool found = false;                                                     // variable to change if a allocated block is found
+    for (uint i = sb->bmapstart + 1; i < mapVec.size(); i++) {
+        if (mapVec[i] == 1) {
+            found = false;
+            for (uint j = 0; j < referenceToBlock.size(); j++) {
+                if (referenceToBlock[j] == i) {
+                    found = true;                                           // If you do find an Inode refferenced to the correctly allocated block
+                    break;
+                }
+            }
+            if (found == false) {                                           // If you can't find the correct match, then the error has occured
+                cout << "The bit map says block " << i << " is allocated but you cannot find it belonging to any file or directory." << endl;
+                return true;
+            }
+        }
+    }
+    cout << endl;
+    return false;
 }
+
+bool superblockCheck(void * fs, superblock * sb, dinode ** inodeArray, vector<int>mapVec) {
+    
+}
+
+// --------------------------------------
+// End of File System Check Functions
+// --------------------------------------
 
 int main(int argc, char * argv[]) {
 
@@ -220,16 +234,18 @@ int main(int argc, char * argv[]) {
     struct stat fileSystem;
     stat(argv[1], &fileSystem); 
     // If Superblock is not the correct size
-    if (fileSystem.st_size/BSIZE != sb->size) {
+    if (fileSystem.st_size/BSIZE != sb->size) {                             // If the file system size is less than the actual size of the file system
+        cout << endl;
         cout << "File System Error" << endl;
         cout << "Incorrect size of Superblock" << endl;
         cout << "Superblock size: " << sb->size << endl;
         cout << "-----------------------" << endl;
         cout << "SUPERBLOCK -> NOT OK" << endl;
-        munmap(fs, BSIZE*1024);
+        cout << endl;
+        munmap(fs, BSIZE*1024);                                             // Deallocating Memory
         exit(1);
     }
-    else {
+    else {                                                                  // Else print out the qualities that are needed 
         cout << endl;
         cout << "SUPERBLOCK" << endl;
         cout << "-----------------------" << endl;
@@ -237,12 +253,12 @@ int main(int argc, char * argv[]) {
         cout << "   Number of Blocks: " << sb->nblocks << endl;
         cout << "   Number of Inodes: " << sb->ninodes << endl;
         cout << "   Number of Logs:   " << sb->nlog << endl;
-        cout << "------------"          << endl;
+        cout << "------------"          << endl;                            
         cout << "   Logs begins at:   " << sb->logstart << endl;
         cout << "   Inodes begins at: " << sb->inodestart << endl;
         cout << "   BitMap begins at: " << sb->bmapstart << endl;
-        cout << "-----------------------" << endl;
-        cout << "SUPERBLOCK -> OK" << endl;
+        cout << "-----------------------" << endl;  
+        cout << "SUPERBLOCK -> OK" << endl;                                 // Stating the clearence of the Superblock checker
         cout << endl;
     }
 
@@ -254,7 +270,7 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < sb->ninodes; i++) {
         inodeArray[i] = NULL;                                       // Initializing inodes with NULL to prevent garbage values
     }
-    dinode* node = (dinode*)((char*) fs + 1024);                    // Pointer at the beinging of the Inode Block
+    dinode * node = (dinode*)((char*) fs + (sb->inodestart * BSIZE));                    // Pointer at the beinging of the Inode Block
     for (uint i = 0; i < sb->ninodes; i++) {
         inodeArray[i] = node++;                                     // Filling inodeArray with Inodes
     }
@@ -263,15 +279,17 @@ int main(int argc, char * argv[]) {
 // BitMap block
 // ---------------------------------
 
-    char * mapPtr = (char*)fs + (((sb->ninodes / IPB) + 3) * BSIZE);
-    vector<int> mapVec = {0};                                       // Vector to hold the BitMap data
+    char * mapPtr = (char*)(fs) + (sb->bmapstart * BSIZE);
+    vector<int> mapVec;                                       // Vector to hold the BitMap data
     for (uint i = 0; i < (sb->nblocks / 8) + 1; i++) {
        for(int j = 0; j < 8; j++){
-            mapVec.push_back((((*mapPtr) << (7 - j)) & 0x80));      // Pushing the correct bits into a vector called mapVec that is the BitMap
+            mapVec.push_back(!!(((*mapPtr) << (7 - j)) & 0x80));      // Pushing the correct bits into a vector called mapVec that is the BitMap
+            cout << mapVec[i] << ' ';
        }
         mapPtr++;                                                   // Incrementing the pointer to the BitMap
     }
-    
+    cout << endl;
+
 // ---------------------------------
 // Catching File System Errors
 // ---------------------------------
@@ -291,6 +309,10 @@ int main(int argc, char * argv[]) {
         munmap(fs, BSIZE*1024);
         exit(1);
     }
+    else if(inodeOneNotRoot(fs, sb, inodeArray, mapVec)) {
+        munmap(fs, BSIZE*1024);
+        exit(1);
+    }
     else if(slashProblems(fs, sb, inodeArray, mapVec)) {
         munmap(fs, BSIZE*1024);
         exit(1);
@@ -299,13 +321,14 @@ int main(int argc, char * argv[]) {
         munmap(fs, BSIZE*1024);
         exit(1);
     }
-    else if(inodeOneNotRoot(fs, sb, inodeArray, mapVec)) {
-        munmap(fs, BSIZE*1024);
-        exit(1);
-    }
     else if(missingBlock(fs, sb, inodeArray, mapVec)) {
         munmap(fs, BSIZE*1024);
         exit(1);
+    }
+
+    else {
+        cout << endl << "No System Errors Found" << endl << endl;
+        munmap(fs, BSIZE*1024);
     }
     cout << endl;
     return 0;
